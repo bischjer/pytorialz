@@ -1,4 +1,5 @@
 import math
+import time
 import sys
 import re
 from twisted.internet import reactor, protocol
@@ -25,15 +26,32 @@ class ElevatorCab:
         
     def get_current_floor(self):
         return self._current_floor
-        
+
+    def animate_motion(self, steps):
+        for f in xrange(0, int(math.fabs(steps))+1):
+            obuffer="\r"
+            if steps <= -1:
+                f = -1*f
+                for i in xrange(self.get_current_floor()-1, int(math.fabs(f))-1, -1):
+                    obuffer = obuffer+"="
+            else:
+                for i in xrange(0, int(math.fabs(f))):
+                    obuffer = obuffer+"="
+            obuffer = obuffer+"[%i]\0" % (self.get_current_floor() + f)
+            sys.stdout.write("\r                                     ")
+            sys.stdout.flush()
+            sys.stdout.write(obuffer)
+            sys.stdout.flush()
+            time.sleep(0.4)
+        sys.stdout.write("\n")
+        sys.stdout.flush()
+    
     def move(self, floor):
         steps = floor - self.get_current_floor()
-        for f in xrange(0, int(math.fabs(steps))+1):
-            if steps < 0:
-                f = -1*f
-            print self.get_current_floor() + f
-        
+
+        self.animate_motion(steps)
         self._current_floor = self.get_current_floor() + steps
+        
 
 
 class ElevatorController:
