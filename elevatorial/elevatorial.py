@@ -1,4 +1,8 @@
 import math
+import sys
+import re
+from twisted.internet import reactor, protocol
+
 
 class ElevatorCab:
     def __init__(self, id, floors=[]):
@@ -24,8 +28,11 @@ class ElevatorCab:
         
     def move(self, floor):
         steps = floor - self.get_current_floor()
-        print steps
-
+        for f in xrange(0, int(math.fabs(steps))+1):
+            if steps < 0:
+                f = -1*f
+            print self.get_current_floor() + f
+        
         self._current_floor = self.get_current_floor() + steps
 
 
@@ -36,8 +43,10 @@ class ElevatorController:
     def add(self, elevator):
         self.elevators.append(elevator)
 
+    def getElevator(self, index):
+        return self.elevators[index]
 
-if __name__ == "__main__":
+def main():
     controller = ElevatorController()
 
     ec1 = ElevatorCab("First",[0,1,2,3,4,5,6,7,8,9,10,11,12])
@@ -46,10 +55,28 @@ if __name__ == "__main__":
     controller.add(ec1)
     controller.add(ec2)
 
-    from random import randrange
-    
-    for i in xrange(0,10):
-        print ec1
-        print ec2
-        ec1.move(randrange(0,13))
-        ec2.move(randrange(0,13))
+    elevator_request = re.compile(r'e\s(\d+)\s(\d+)')
+    floor_request = re.compile(r'f\s(\d+)\s(up|down)')
+        
+    running = True
+    while(running):
+        instr = sys.stdin.readline()
+        if instr.strip() == "quit":
+            running = False
+
+        em = elevator_request.match(instr)
+        if em:
+            elevator_number = int(em.group(1))
+            requested_floor = em.group(2)
+            if 0 <= elevator_number < len(controller.elevators)+1:
+                controller.getElevator(elevator_number).move(int(requested_floor))
+            else:
+                print "Elevator index out of range"
+            
+        fm = floor_request.match(instr)
+        if fm:
+            print fm.group(1)
+            print fm.group(2)
+        
+if __name__ == "__main__":
+    main()
